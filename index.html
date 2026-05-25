@@ -88,8 +88,20 @@
     .layout {
       display: grid;
       grid-template-columns: 1.35fr 0.85fr;
+      grid-template-rows: auto auto;
       gap: 24px;
-      align-items: stretch;
+      align-items: start;
+    }
+
+    .result-card {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .layout > aside {
+      grid-column: 2;
+      grid-row: 1 / -1;
+      align-self: start;
     }
 
     .preview-shell,
@@ -103,6 +115,8 @@
     }
 
     .preview-shell {
+      grid-column: 1;
+      grid-row: 1;
       padding: 22px;
       min-height: 720px;
       display: flex;
@@ -409,9 +423,12 @@
 
     .panel {
       padding: 24px;
-      height: fit-content;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
       position: sticky;
       top: 24px;
+      align-self: start;
     }
 
     .panel h3 {
@@ -500,17 +517,26 @@
       color: #5145cd;
     }
 
+    .btn.wide,
     .btn.replay {
       grid-column: span 2;
+    }
+
+    .btn.replay {
+      display: none;
       background: rgba(109, 93, 252, 0.14);
       color: #5145cd;
       border: 1px solid rgba(109, 93, 252, 0.28);
     }
 
+    .btn.replay.show {
+      display: block;
+    }
+
     .result-card {
-      margin-top: 18px;
       padding: 20px;
       display: none;
+      flex-shrink: 0;
     }
 
     .result-card.show {
@@ -587,7 +613,8 @@
     }
 
     .legend {
-      margin-top: 16px;
+      margin-top: auto;
+      padding-top: 16px;
       color: var(--muted);
       font-size: 13px;
       line-height: 1.45;
@@ -596,10 +623,19 @@
     @media (max-width: 1100px) {
       .layout {
         grid-template-columns: 1fr;
+        grid-template-rows: auto;
+      }
+
+      .preview-shell,
+      .result-card,
+      .layout > aside {
+        grid-column: 1;
+        grid-row: auto;
       }
 
       .panel {
         position: static;
+        align-self: stretch;
       }
 
       .landing-preview {
@@ -752,6 +788,28 @@
         </div>
       </section>
 
+      <section class="result-card" id="resultCard">
+        <div class="result-head">
+          <div>
+            <div class="result-status" id="resultStatus">Результат</div>
+            <div class="result-message" id="resultMessage"></div>
+          </div>
+          <div class="result-score" id="resultScore">0</div>
+        </div>
+
+        <div class="feedback-grid">
+          <div class="feedback-box">
+            <h4>Что получилось</h4>
+            <ul id="goodList"></ul>
+          </div>
+
+          <div class="feedback-box">
+            <h4>Что улучшить</h4>
+            <ul id="improveList"></ul>
+          </div>
+        </div>
+      </section>
+
       <aside>
         <section class="panel">
           <h3>Настройки лендинга</h3>
@@ -816,38 +874,15 @@
             <button class="btn primary" id="checkBtn" type="button">Проверить</button>
             <button class="btn accent" id="hintBtn" type="button">Подсказка (1/5)</button>
             <button class="btn soft" id="idealBtn" type="button">Идеальный вариант</button>
-            <button class="btn soft" id="problemsBtn" type="button">Показать проблемы</button>
+            <button class="btn soft wide" id="problemsBtn" type="button">Показать проблемы</button>
             <button class="btn replay" id="resetBtn" type="button">Пройти заново</button>
           </div>
 
           <div class="hint" id="hintBox"></div>
 
           <p class="legend">
-            Цель: набрать 85+ баллов. После проверки меняйте настройки и снова
-            нажимайте «Проверить» — или «Пройти заново», чтобы начать с нуля.
+            Цель: набрать 85+ баллов. Настройте параметры и нажмите «Проверить».
           </p>
-        </section>
-
-        <section class="result-card" id="resultCard">
-          <div class="result-head">
-            <div>
-              <div class="result-status" id="resultStatus">Результат</div>
-              <div class="result-message" id="resultMessage"></div>
-            </div>
-            <div class="result-score" id="resultScore">0</div>
-          </div>
-
-          <div class="feedback-grid">
-            <div class="feedback-box">
-              <h4>Что получилось</h4>
-              <ul id="goodList"></ul>
-            </div>
-
-            <div class="feedback-box">
-              <h4>Что улучшить</h4>
-              <ul id="improveList"></ul>
-            </div>
-          </div>
         </section>
       </aside>
     </main>
@@ -1121,6 +1156,14 @@
       elements.resultCard.classList.remove("show");
     }
 
+    function showReplay() {
+      elements.resetBtn.classList.add("show");
+    }
+
+    function hideReplay() {
+      elements.resetBtn.classList.remove("show");
+    }
+
     function updateHintButtonLabel() {
       const total = hints.length;
       const next = hintIndex + 1;
@@ -1173,6 +1216,8 @@
         behavior: "smooth",
         block: "nearest"
       });
+
+      showReplay();
     }
 
     function showHint() {
@@ -1197,6 +1242,7 @@
     function reset() {
       setState(initialState);
       hideResult();
+      hideReplay();
       elements.hintBox.classList.remove("show");
       elements.hintBox.textContent = "";
       hintIndex = 0;
@@ -1211,7 +1257,7 @@
       hideResult();
       setState(idealState);
       elements.hintBox.textContent =
-        "Пример сильного экрана: конкретный заголовок, короткое описание, заметная кнопка и достаточно воздуха. Поменяйте настройки сами, нажмите «Проверить» или «Пройти заново», чтобы попробовать ещё раз.";
+        "Пример сильного экрана: конкретный заголовок, короткое описание, заметная кнопка и достаточно воздуха. Поменяйте настройки сами и нажмите «Проверить».";
       elements.hintBox.classList.add("show");
     }
 
