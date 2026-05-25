@@ -377,6 +377,7 @@
     }
 
     .marker {
+      pointer-events: none;
       position: absolute;
       background: #111827;
       color: white;
@@ -497,6 +498,13 @@
     .btn.accent {
       background: rgba(109, 93, 252, 0.11);
       color: #5145cd;
+    }
+
+    .btn.replay {
+      grid-column: span 2;
+      background: rgba(109, 93, 252, 0.14);
+      color: #5145cd;
+      border: 1px solid rgba(109, 93, 252, 0.28);
     }
 
     .result-card {
@@ -805,18 +813,18 @@
           </div>
 
           <div class="buttons">
-            <button class="btn primary" id="checkBtn">Проверить</button>
-            <button class="btn accent" id="hintBtn">Подсказка</button>
-            <button class="btn soft" id="idealBtn">Идеальный вариант</button>
-            <button class="btn soft" id="problemsBtn">Показать проблемы</button>
-            <button class="btn soft" id="resetBtn">Сбросить</button>
+            <button class="btn primary" id="checkBtn" type="button">Проверить</button>
+            <button class="btn accent" id="hintBtn" type="button">Подсказка (1/5)</button>
+            <button class="btn soft" id="idealBtn" type="button">Идеальный вариант</button>
+            <button class="btn soft" id="problemsBtn" type="button">Показать проблемы</button>
+            <button class="btn replay" id="resetBtn" type="button">Пройти заново</button>
           </div>
 
           <div class="hint" id="hintBox"></div>
 
           <p class="legend">
-            Цель: набрать 85+ баллов. Хороший первый экран быстро объясняет
-            ценность продукта и ведет пользователя к понятному действию.
+            Цель: набрать 85+ баллов. После проверки меняйте настройки и снова
+            нажимайте «Проверить» — или «Пройти заново», чтобы начать с нуля.
           </p>
         </section>
 
@@ -1109,6 +1117,21 @@
       return `hsl(246, ${saturation}%, ${lightness}%)`;
     }
 
+    function hideResult() {
+      elements.resultCard.classList.remove("show");
+    }
+
+    function updateHintButtonLabel() {
+      const total = hints.length;
+      const next = hintIndex + 1;
+      elements.hintBtn.textContent = `Подсказка (${next}/${total})`;
+    }
+
+    function onControlChange() {
+      hideResult();
+      updatePreview();
+    }
+
     function updatePreview() {
       const state = getState();
       const score = calculateScore();
@@ -1161,6 +1184,8 @@
       if (hintIndex >= hints.length) {
         hintIndex = 0;
       }
+
+      updateHintButtonLabel();
     }
 
     function toggleProblems() {
@@ -1171,10 +1196,11 @@
 
     function reset() {
       setState(initialState);
-      elements.resultCard.classList.remove("show");
+      hideResult();
       elements.hintBox.classList.remove("show");
       elements.hintBox.textContent = "";
       hintIndex = 0;
+      elements.hintBtn.textContent = `Подсказка (1/${hints.length})`;
 
       problemsVisible = false;
       elements.problemMarkers.classList.remove("active");
@@ -1182,10 +1208,11 @@
     }
 
     function showIdeal() {
+      hideResult();
       setState(idealState);
-      elements.hintBox.textContent = "Это не единственный правильный вариант, но он хорошо показывает принцип: конкретный заголовок, короткое описание, заметная кнопка и достаточно воздуха.";
+      elements.hintBox.textContent =
+        "Пример сильного экрана: конкретный заголовок, короткое описание, заметная кнопка и достаточно воздуха. Поменяйте настройки сами, нажмите «Проверить» или «Пройти заново», чтобы попробовать ещё раз.";
       elements.hintBox.classList.add("show");
-      checkResult();
     }
 
     [
@@ -1196,8 +1223,8 @@
       elements.buttonText,
       elements.spacing
     ].forEach((control) => {
-      control.addEventListener("input", updatePreview);
-      control.addEventListener("change", updatePreview);
+      control.addEventListener("input", onControlChange);
+      control.addEventListener("change", onControlChange);
     });
 
     elements.checkBtn.addEventListener("click", checkResult);
